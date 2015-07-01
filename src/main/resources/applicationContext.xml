@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+    <dubbo:application name="o2o-consumer"/>
+
+    <dubbo:registry address="zookeeper://182.92.10.130:2181"/>
+
+  	<!-- 拦截链路 -->
+	<bean id="serviceProxyCreator"
+		class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+		<property name="interceptorNames">
+			<list>
+				<value>interceptorChain</value>
+			</list>
+		</property>
+		<property name="beanNames">
+			<list>
+				<value>*Service</value>
+				<value>*ServiceImpl</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="interceptorChain" class="com.o2o.framework.core.aop.InterceptorChain">
+		<property name="chains">
+			<list>
+				<ref bean="logInitInterceptor" />
+				<ref bean="serviceContextInitInterceptor" />
+			</list>
+		</property>
+	</bean>
+	<!-- 日志代理 -->
+	<bean id="logInitInterceptor"
+		class="com.o2o.framework.core.aop.AnnotatedLogInterceptor" />
+
+
+    <dubbo:reference protocol="dubbo"
+                     version="1.0.0-DEV" id="appService" timeout="20000"
+                     interface="com.o2o.business.service.AppService" check="false"
+                     retries="0"/>
+
+
+    <dubbo:reference protocol="dubbo"
+                     version="1.0.0-DEV" id="userService" timeout="20000"
+                     interface="com.o2o.business.service.UserService" check="false"
+                     retries="0"/>
+    <!-- 拦截链路 -->
+    <bean id="serviceProxyCreator"
+          class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+        <property name="interceptorNames">
+            <list>
+                <value>interceptorChain</value>
+            </list>
+        </property>
+    </bean>
+    <bean id="interceptorChain" class="com.o2o.framework.core.aop.InterceptorChain">
+        <property name="chains">
+            <list>
+                <ref bean="logInitInterceptor"/>
+            </list>
+        </property>
+    </bean>
+    <!-- 日志代理 -->
+    <bean id="logInitInterceptor"
+          class="com.o2o.framework.core.aop.AnnotatedLogInterceptor"/>
+
+	<!-- 环境代理 -->
+	<bean id="serviceContextInitInterceptor"
+		class="com.o2o.framework.service.aop.ServiceContextInitInterceptor" />
+</beans>
